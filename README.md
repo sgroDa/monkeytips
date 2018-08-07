@@ -1,9 +1,9 @@
-This is the reference code for [monkeytips](https://monkeytips.top) cryptocurrency.
+This is the reference code for [monkeytips](http://monkeytips.xyz/) cryptocurrency.
 
 * Official homepage: [monkeytips](http://monkeytips.xyz/)
-* Official repository: [monkeytips GitHub](https://github.com/worktips/worktips)
+* Official repository: [monkeytips GitHub](https://github.com/monkeytips/monkeytips)
 * Official Discord: [monkeytips Discord](https://discord.gg/EAaKcCy)
-* Official Block explorer: [monkeytips Block explorer](http://blockexplorer.monkeytips.top)
+* Official Block explorer: [monkeytips Block explorer](http://monkeytips.xyz/cockexploder/#)
 
 
 ## monkeytips Cryptocurrency
