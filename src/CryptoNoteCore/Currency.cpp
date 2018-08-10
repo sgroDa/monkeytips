@@ -170,11 +170,19 @@ uint32_t Currency::upgradeHeight(uint8_t majorVersion) const {
 }
 
 bool Currency::getBlockReward(uint8_t blockMajorVersion, size_t medianSize, size_t currentBlockSize, uint64_t alreadyGeneratedCoins,
-  uint64_t fee, uint64_t& reward, int64_t& emissionChange) const {
+  uint64_t fee, uint64_t& reward, int64_t& emissionChange, uint32_t height) const {
   assert(alreadyGeneratedCoins <= m_moneySupply);
-  assert(m_emissionSpeedFactor > 0 && m_emissionSpeedFactor <= 8 * sizeof(uint64_t));
 
-  uint64_t baseReward = (m_moneySupply - alreadyGeneratedCoins) >> m_emissionSpeedFactor;
+  auto emission = m_emissionSpeedFactor;
+
+  if (height >= CryptoNote::parameters::EMISSION_SPEED_V2_HEIGHT)
+  {
+      emission = CryptoNote::parameters::EMISSION_SPEED_FACTOR_V2;
+  }
+
+  assert(emission > 0 && emission <= 8 * sizeof(uint64_t));
+
+  uint64_t baseReward = (m_moneySupply - alreadyGeneratedCoins) >> emission;
   if (alreadyGeneratedCoins == 0 && m_genesisBlockReward != 2000000000) {
     baseReward = m_genesisBlockReward;
     std::cout << "Genesis block reward: " << baseReward << std::endl;
@@ -224,7 +232,7 @@ bool Currency::constructMinerTx(uint8_t blockMajorVersion, uint32_t height, size
 
   uint64_t blockReward;
   int64_t emissionChange;
-  if (!getBlockReward(blockMajorVersion, medianSize, currentBlockSize, alreadyGeneratedCoins, fee, blockReward, emissionChange)) {
+  if (!getBlockReward(blockMajorVersion, medianSize, currentBlockSize, alreadyGeneratedCoins, fee, blockReward, emissionChange, height)) {
     logger(INFO) << "Block is too big";
     return false;
   }
@@ -432,12 +440,16 @@ bool Currency::parseAmount(const std::string& str, uint64_t& amount) const {
 
 Difficulty Currency::getNextDifficulty(uint8_t version, uint32_t blockIndex, std::vector<uint64_t> timestamps, std::vector<Difficulty> cumulativeDifficulties) const
 {
-    if (blockIndex < CryptoNote::parameters::LWMA_2_DIFFICULTY_BLOCK_INDEX)
+    if (blockIndex >= CryptoNote::parameters::LWMA_2_DIFFICULTY_BLOCK_INDEX_V2)
     {
-        return nextDifficulty(version, blockIndex, timestamps, cumulativeDifficulties);
+        return nextDifficultyV4(timestamps, cumulativeDifficulties);
+    }
+    else if (blockIndex >= CryptoNote::parameters::LWMA_2_DIFFICULTY_BLOCK_INDEX)
+    {
+        return nextDifficultyV3(timestamps, cumulativeDifficulties);
     }
 
-    return nextDifficultyV3(timestamps, cumulativeDifficulties);
+    return nextDifficulty(version, blockIndex, timestamps, cumulativeDifficulties);
 }
 
 // LWMA-2 difficulty algorithm
@@ -475,6 +487,52 @@ Difficulty Currency::nextDifficultyV3(std::vector<std::uint64_t> timestamps, std
 
     if (sum_3_ST < (8 * T) / 10)
     {
+        next_D = std::max(next_D, (prev_D * 110) / 100);
+    }
+
+    return static_cast<uint64_t>(next_D);
+}
+
+template <typename T>
+T clamp(const T& n, const T& lower, const T& upper)
+{
+    return std::max(lower, std::min(n, upper));
+}
+
+// LWMA-2 difficulty algorithm 
+// Copyright (c) 2017-2018 Zawy, MIT License
+// https://github.com/zawy12/difficulty-algorithms/issues/3
+Difficulty Currency::nextDifficultyV4(std::vector<std::uint64_t> timestamps, std::vector<Difficulty> cumulativeDifficulties) const
+{
+    int64_t T = CryptoNote::parameters::DIFFICULTY_TARGET;
+    int64_t N = CryptoNote::parameters::DIFFICULTY_WINDOW_V3;
+    int64_t L(0), ST, sum_3_ST(0), next_D, prev_D;
+
+    if (timestamps.size() <= static_cast<uint64_t>(N))
+    {
+        return 1000;
+    }
+
+    for (int64_t i = 1; i <= N; i++)
+    {  
+        ST = clamp(-6 * T, static_cast<int64_t>(timestamps[i]) - static_cast<int64_t>(timestamps[i-1]), 6 * T);
+
+        L +=  ST * i; 
+
+        if (i > N-3)
+        {
+            sum_3_ST += ST;
+        } 
+    }
+
+    next_D = (static_cast<int64_t>(cumulativeDifficulties[N] - cumulativeDifficulties[0]) * T * (N+1) * 99) / (100 * 2 * L);
+    prev_D = cumulativeDifficulties[N] - cumulativeDifficulties[N-1];
+
+    /* Make sure we don't divide by zero if 50x attacker (thanks fireice) */
+    next_D = std::max((prev_D*67)/100, std::min(next_D, (prev_D*150)/100));
+
+    if (sum_3_ST < (8 * T) / 10)
+    {  
         next_D = std::max(next_D, (prev_D * 110) / 100);
     }
 
