@@ -4,6 +4,7 @@ This is the reference code for [monkeytips](http://monkeytips.xyz/) cryptocurren
 * Official repository: [monkeytips GitHub](https://github.com/monkeytips/monkeytips)
 * Official Discord: [monkeytips Discord](https://discord.gg/EAaKcCy)
 * Official Block explorer: [monkeytips Block explorer](http://monkeytips.xyz/cockexploder/#)
+* Official GUI wallet: [monkey-wallet-go](https://github.com/carserayater/monkey-wallet-go/releases)
 
 
 ## monkeytips Cryptocurrency
