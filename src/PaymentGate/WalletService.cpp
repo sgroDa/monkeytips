@@ -286,7 +286,12 @@ void validateMixin(const uint32_t mixin, const uint32_t height, Logging::LoggerR
     uint64_t minMixin = 0;
     uint64_t maxMixin = std::numeric_limits<uint64_t>::max();
 
-    if (height >= CryptoNote::parameters::MIXIN_LIMITS_V2_HEIGHT)
+    if (height >= CryptoNote::parameters::MIXIN_LIMITS_V3_HEIGHT)
+    {
+        minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V3;
+        maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V3;
+    }
+    else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V2_HEIGHT)
     {
         minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V2;
         maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V2;
