@@ -63,16 +63,19 @@ const uint64_t MINIMUM_MIXIN_V1                              = 0;
 const uint64_t MAXIMUM_MIXIN_V1                              = 7;
 const uint64_t MINIMUM_MIXIN_V2                              = 7;
 const uint64_t MAXIMUM_MIXIN_V2                              = 7;
+const uint64_t MINIMUM_MIXIN_V3                              = 3;
+const uint64_t MAXIMUM_MIXIN_V3                              = 3;
 
 const uint32_t MIXIN_LIMITS_V1_HEIGHT                        = 40;
 const uint32_t MIXIN_LIMITS_V2_HEIGHT                        = 60;
+const uint32_t MIXIN_LIMITS_V3_HEIGHT                        = 93333;
 
-const uint64_t DEFAULT_MIXIN                                 = MINIMUM_MIXIN_V2;
+const uint64_t DEFAULT_MIXIN                                 = MINIMUM_MIXIN_V3;
 
 const uint64_t DEFAULT_DUST_THRESHOLD                        = UINT64_C(10);
 const uint64_t DEFAULT_DUST_THRESHOLD_V2                     = UINT64_C(10);
 
-const uint32_t DUST_THRESHOLD_V2_HEIGHT                      = MIXIN_LIMITS_V2_HEIGHT;
+const uint32_t DUST_THRESHOLD_V2_HEIGHT                      = MIXIN_LIMITS_V3_HEIGHT;
 
 const uint64_t EXPECTED_NUMBER_OF_BLOCKS_PER_DAY             = 24 * 60 * 60 / DIFFICULTY_TARGET;
 const size_t   DIFFICULTY_WINDOW                             = 17;
