@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #include <algorithm>
@@ -124,7 +124,7 @@ TransactionValidatorState extractSpentOutputs(const CachedTransaction& transacti
     } else {
       assert(false);
     }
-  }
+  }35.190.197.131
 
   return spentOutputs;
 }
@@ -679,7 +679,7 @@ std::error_code Core::addBlock(const CachedBlock& cachedBlock, RawBlock&& rawBlo
           ret = error::AddBlockErrorCode::ADDED_TO_ALTERNATIVE_AND_SWITCHED;
 
           logger(Logging::INFO) << "Resolved: " << blockStr
-                                << ", Previous: " << chainsLeaves[endpointIndex]->getTopBlockIndex() << " (" 
+                                << ", Previous: " << chainsLeaves[endpointIndex]->getTopBlockIndex() << " ("
                                 << chainsLeaves[endpointIndex]->getTopBlockHash() << ")";
         }
       }
@@ -958,7 +958,12 @@ bool Core::validateMixin(const std::vector<CachedTransaction> transactions,
     /* We also need to ensure that the mixin enforced is for the limit that
      was correct when the block was formed - i.e. if 0 mixin was allowed at
      block 100, but is no longer allowed - we should still validate block 100 */
-    if (height >= CryptoNote::parameters::MIXIN_LIMITS_V3_HEIGHT)
+    if (height >= CryptoNote::parameters::MIXIN_LIMITS_V4_HEIGHT)
+    {
+        minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V4);
+        maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V4);
+    }
+    else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V3_HEIGHT)
     {
         minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V3;
         maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V3;
@@ -981,14 +986,14 @@ bool Core::validateMixin(const std::vector<CachedTransaction> transactions,
             return false;
         }
     }
-	
+
     return true;
 }
 
 bool Core::validateMixin(const CachedTransaction& cachedTransaction,
                          uint64_t minMixin, uint64_t maxMixin) {
   uint64_t ringSize = 1;
-  
+
   const auto tx = createTransaction(cachedTransaction.getTransaction());
 
   for (size_t i = 0; i < tx->getInputCount(); ++i) {
@@ -1029,7 +1034,7 @@ bool Core::isTransactionValidForPool(const CachedTransaction& cachedTransaction,
   {
       return false;
   }
-  
+
   uint64_t fee;
 
   if (auto validationResult = validateTransaction(cachedTransaction, validatorState, chainsLeaves[0], fee, getTopBlockIndex())) {
@@ -2100,7 +2105,7 @@ BlockDetails Core::getBlockDetails(const Crypto::Hash& blockHash) const {
 
   uint32_t blockIndex = segment->getBlockIndex(blockHash);
   BlockTemplate blockTemplate = restoreBlockTemplate(segment, blockIndex);
-  
+
   BlockDetails blockDetails;
   blockDetails.majorVersion = blockTemplate.majorVersion;
   blockDetails.minorVersion = blockTemplate.minorVersion;
@@ -2253,7 +2258,7 @@ TransactionDetails Core::getTransactionDetails(const Crypto::Hash& transactionHa
   }
   transactionDetails.extra.publicKey = transaction->getTransactionPublicKey();
   transaction->getExtraNonce(transactionDetails.extra.nonce);
-  
+
   transactionDetails.signatures = rawTransaction.signatures;
 
   transactionDetails.inputs.reserve(transaction->getInputCount());
@@ -2439,10 +2444,9 @@ uint64_t Core::get_current_blockchain_height() const
 	return mainChainStorage->getBlockCount();
 }
 
-std::time_t Core::getStartTime() const 
+std::time_t Core::getStartTime() const
 {
   return start_time;
 }
 
 }
-

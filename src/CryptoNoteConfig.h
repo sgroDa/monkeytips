@@ -65,17 +65,20 @@ const uint64_t MINIMUM_MIXIN_V2                              = 7;
 const uint64_t MAXIMUM_MIXIN_V2                              = 7;
 const uint64_t MINIMUM_MIXIN_V3                              = 3;
 const uint64_t MAXIMUM_MIXIN_V3                              = 3;
+const uint64_t MINIMUM_MIXIN_V4                              = 0;
+const uint64_t MAXIMUM_MIXIN_V4                              = 3;
 
 const uint32_t MIXIN_LIMITS_V1_HEIGHT                        = 40;
 const uint32_t MIXIN_LIMITS_V2_HEIGHT                        = 60;
 const uint32_t MIXIN_LIMITS_V3_HEIGHT                        = 93333;
+const uint64_t MIXIN_LIMITS_V4_HEIGHT                        = 100000;
 
-const uint64_t DEFAULT_MIXIN                                 = MINIMUM_MIXIN_V3;
+const uint64_t DEFAULT_MIXIN                                 = MINIMUM_MIXIN_V4;
 
 const uint64_t DEFAULT_DUST_THRESHOLD                        = UINT64_C(10);
 const uint64_t DEFAULT_DUST_THRESHOLD_V2                     = UINT64_C(10);
 
-const uint32_t DUST_THRESHOLD_V2_HEIGHT                      = MIXIN_LIMITS_V3_HEIGHT;
+const uint32_t DUST_THRESHOLD_V2_HEIGHT                      = MIXIN_LIMITS_V4_HEIGHT;
 
 const uint64_t EXPECTED_NUMBER_OF_BLOCKS_PER_DAY             = 24 * 60 * 60 / DIFFICULTY_TARGET;
 const size_t   DIFFICULTY_WINDOW                             = 17;
@@ -119,10 +122,11 @@ static_assert(UPGRADE_VOTING_WINDOW > 1, "Bad UPGRADE_VOTING_WINDOW");
 /* The index in the FORK_HEIGHTS array that this version of the software will
    support. For example, if CURRENT_FORK_INDEX is 3, this version of the
    software will support the fork at 600,000 blocks. */
-const uint8_t CURRENT_FORK_INDEX = 3;
+const uint8_t CURRENT_FORK_INDEX = 4;
 
 /* Block heights we are going to have hard forks at */
 const uint64_t FORK_HEIGHTS[] = {
+    100000,
     187000,
     350000,
     440000,
@@ -179,6 +183,8 @@ const size_t   P2P_DEFAULT_HANDSHAKE_INVOKE_TIMEOUT          = 5000;          //
 const char     P2P_STAT_TRUSTED_PUB_KEY[]                    = "";
 
 const char* const SEED_NODES[] = {
+  "35.237.212.180:13001",
+  "35.190.197.131:13001",
   "seed-mtip-0.triforcecoin.com:13001",
   "seed-mtip-1.triforcecoin.com:13001",
   "35.237.5.160:13001",
