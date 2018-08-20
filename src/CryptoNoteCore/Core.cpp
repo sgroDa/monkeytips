@@ -124,7 +124,7 @@ TransactionValidatorState extractSpentOutputs(const CachedTransaction& transacti
     } else {
       assert(false);
     }
-  }35.190.197.131
+  }
 
   return spentOutputs;
 }
@@ -960,8 +960,8 @@ bool Core::validateMixin(const std::vector<CachedTransaction> transactions,
      block 100, but is no longer allowed - we should still validate block 100 */
     if (height >= CryptoNote::parameters::MIXIN_LIMITS_V4_HEIGHT)
     {
-        minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V4);
-        maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V4);
+        minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V4;
+        maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V4;
     }
     else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V3_HEIGHT)
     {
