@@ -63,22 +63,19 @@ const uint64_t MINIMUM_MIXIN_V1                              = 0;
 const uint64_t MAXIMUM_MIXIN_V1                              = 7;
 const uint64_t MINIMUM_MIXIN_V2                              = 7;
 const uint64_t MAXIMUM_MIXIN_V2                              = 7;
-const uint64_t MINIMUM_MIXIN_V3                              = 3;
+const uint64_t MINIMUM_MIXIN_V3                              = 0;
 const uint64_t MAXIMUM_MIXIN_V3                              = 3;
-const uint64_t MINIMUM_MIXIN_V4                              = 0;
-const uint64_t MAXIMUM_MIXIN_V4                              = 3;
 
 const uint32_t MIXIN_LIMITS_V1_HEIGHT                        = 40;
 const uint32_t MIXIN_LIMITS_V2_HEIGHT                        = 60;
-const uint32_t MIXIN_LIMITS_V3_HEIGHT                        = 93333;
-const uint64_t MIXIN_LIMITS_V4_HEIGHT                        = 100000;
+const uint32_t MIXIN_LIMITS_V3_HEIGHT                        = 101000;
 
-const uint64_t DEFAULT_MIXIN                                 = MINIMUM_MIXIN_V4;
+const uint64_t DEFAULT_MIXIN                                 = MAXIMUM_MIXIN_V3;
 
 const uint64_t DEFAULT_DUST_THRESHOLD                        = UINT64_C(10);
 const uint64_t DEFAULT_DUST_THRESHOLD_V2                     = UINT64_C(10);
 
-const uint32_t DUST_THRESHOLD_V2_HEIGHT                      = MIXIN_LIMITS_V4_HEIGHT;
+const uint32_t DUST_THRESHOLD_V2_HEIGHT                      = MIXIN_LIMITS_V3_HEIGHT;
 
 const uint64_t EXPECTED_NUMBER_OF_BLOCKS_PER_DAY             = 24 * 60 * 60 / DIFFICULTY_TARGET;
 const size_t   DIFFICULTY_WINDOW                             = 17;
@@ -112,7 +109,7 @@ const uint32_t KEY_IMAGE_CHECKING_BLOCK_INDEX                = 0;
 const uint32_t UPGRADE_HEIGHT_V2                             = 1;
 const uint32_t UPGRADE_HEIGHT_V3                             = 2;
 const uint32_t UPGRADE_HEIGHT_V4                             = 3; // Upgrade height for CN-Lite Variant 1 switch.
-const uint32_t UPGRADE_HEIGHT_CURRENT                        = UPGRADE_HEIGHT_V4;
+const uint32_t UPGRADE_HEIGHT_CURRENT                        = UPGRADE_HEIGHT_V3;
 const unsigned UPGRADE_VOTING_THRESHOLD                      = 90;               // percent
 const uint32_t UPGRADE_VOTING_WINDOW                         = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;  // blocks
 const uint32_t UPGRADE_WINDOW                                = EXPECTED_NUMBER_OF_BLOCKS_PER_DAY;  // blocks
@@ -126,7 +123,7 @@ const uint8_t CURRENT_FORK_INDEX = 4;
 
 /* Block heights we are going to have hard forks at */
 const uint64_t FORK_HEIGHTS[] = {
-    100000,
+    101000,
     187000,
     350000,
     440000,
