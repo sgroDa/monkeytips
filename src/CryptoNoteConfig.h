@@ -64,7 +64,7 @@ const uint64_t MAXIMUM_MIXIN_V1                              = 7;
 const uint64_t MINIMUM_MIXIN_V2                              = 7;
 const uint64_t MAXIMUM_MIXIN_V2                              = 7;
 const uint64_t MINIMUM_MIXIN_V3                              = 0;
-const uint64_t MAXIMUM_MIXIN_V3                              = 3;
+const uint64_t MAXIMUM_MIXIN_V3                              = 7;
 
 const uint32_t MIXIN_LIMITS_V1_HEIGHT                        = 40;
 const uint32_t MIXIN_LIMITS_V2_HEIGHT                        = 60;
