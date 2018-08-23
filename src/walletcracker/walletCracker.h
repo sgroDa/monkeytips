@@ -4,7 +4,10 @@ void bruteForce(CryptoNote::WalletGreen &wallet);
 
 std::string getExistingWalletFileName();
 
-std::string bruteForce(CryptoNote::WalletGreen &wallet, std::string filename);
+std::string bruteForce(CryptoNote::WalletGreen &wallet, std::string filename,
+                       std::string charSet);
+
+std::string getCharSet();
 
 template <typename Iterator>
 inline bool next_combination(const Iterator first, Iterator k, const Iterator last)

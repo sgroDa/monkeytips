@@ -45,7 +45,9 @@ void bruteForce(CryptoNote::WalletGreen &wallet)
 {
     std::string walletFileName = getExistingWalletFileName();
 
-    std::string password = bruteForce(wallet, walletFileName);
+    std::string charSet = getCharSet();
+
+    std::string password = bruteForce(wallet, walletFileName, charSet);
 
     if (password == "")
     {
@@ -61,12 +63,57 @@ void bruteForce(CryptoNote::WalletGreen &wallet)
     }
 }
 
-std::string bruteForce(CryptoNote::WalletGreen &wallet, std::string filename)
+std::string getCharSet()
 {
-    std::cout << "If your password is anything more than 3 characters, this "
-                 "will take a long fucking time" << std::endl << std::endl;
+    std::string simpleCharSet = "abcdefghijklmnopqrstuvwxyz";
 
-    std::string charSet = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+    std::string mediumCharSet = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    std::string fullCharSet = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+
+    while (true)
+    {
+        std::string charSet;
+
+        std::cout << "What character set do you want to use?"
+                  << std::endl
+                  << "A smaller char set will make cracking faster."
+                  << std::endl
+                  << "1 - Basic: a-z"
+                  << std::endl
+                  << "2 - Medium: a-z, A-Z, 0-9"
+                  << std::endl
+                  << "3 - Full: a-z, A-Z, 0-9, !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
+                  << std::endl
+                  << "Enter selection (1 - 3): ";
+
+        std::getline(std::cin, charSet);
+
+        if (charSet == "1")
+        {
+            return simpleCharSet;
+        }
+        else if (charSet == "2")
+        {
+            return mediumCharSet;
+        }
+        else if (charSet == "3")
+        {
+            return fullCharSet;
+        }
+        else
+        {
+            std::cout << "Bad input, expected a number from 1 to 3" << std::endl;
+        }
+    }
+}
+
+std::string bruteForce(CryptoNote::WalletGreen &wallet, std::string filename,
+                       std::string charSet)
+{
+    std::cout << std::endl
+              << "If your password is anything more than 3 characters, this "
+              << "will take a long fucking time" << std::endl << std::endl;
 
     for (int i = 0; i < 100; i++)
     {
