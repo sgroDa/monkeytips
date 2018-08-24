@@ -1,7 +1,6 @@
 // Copyright (c) 2018, Zpalm
 // GNU GPL V3
 
-#include <tuple>
 #include <Wallet/WalletGreen.h>
 
 struct Comp
