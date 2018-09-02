@@ -46,7 +46,7 @@ public:
   virtual void initializeWithViewKey(const std::string& path, const std::string& password, const Crypto::SecretKey& viewSecretKey) override;
   virtual void load(const std::string& path, const std::string& password, std::string& extra) override;
   virtual void load(const std::string& path, const std::string& password) override;
-  bool crack(const std::string& path, const std::string& password);
+  bool isValidPassword(const std::string& path, const Crypto::chacha8_key& key);
   virtual void shutdown() override;
 
   bool validKeys(const Crypto::SecretKey &secretKey, const Crypto::PublicKey &expected);

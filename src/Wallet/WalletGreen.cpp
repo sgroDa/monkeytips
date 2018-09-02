@@ -456,11 +456,9 @@ bool WalletGreen::validKeys(const Crypto::SecretKey &secretKey, const Crypto::Pu
     return (r && expected == actual);
 }
 
-bool WalletGreen::crack(const std::string& path, const std::string& password)
+bool WalletGreen::isValidPassword(const std::string& path, const Crypto::chacha8_key &key)
 {
     static bool init = false;
-
-    static Crypto::cn_context cnContext;
 
     static ContainerStoragePrefix *prefix;
 
@@ -475,19 +473,16 @@ bool WalletGreen::crack(const std::string& path, const std::string& password)
         init = true;
     }
 
-    /* Generate the key to decrypt the data with */
-    generate_chacha8_key(cnContext, password, m_key);
-
     uint64_t creationTimestamp;
 
-    decryptKeyPair(prefix->encryptedViewKeys, m_viewPublicKey, m_viewSecretKey, creationTimestamp);
+    decryptKeyPair(prefix->encryptedViewKeys, m_viewPublicKey, m_viewSecretKey, creationTimestamp, key);
 
     if (!validKeys(m_viewSecretKey, m_viewPublicKey))
     {
         return false;
     }
 
-    decryptKeyPair(m_containerStorage[0], pub, priv, creationTimestamp);
+    decryptKeyPair(m_containerStorage[0], pub, priv, creationTimestamp, key);
 
     return validKeys(priv, pub);
 }
