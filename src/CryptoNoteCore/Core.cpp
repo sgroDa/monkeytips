@@ -25,6 +25,7 @@
 #include "CryptoNoteCore/TransactionPool.h"
 #include "CryptoNoteCore/TransactionPoolCleaner.h"
 #include "CryptoNoteCore/UpgradeManager.h"
+#include "CryptoNoteCore/Mixins.h"
 #include "CryptoNoteProtocol/CryptoNoteProtocolHandlerCommon.h"
 
 #include <System/Timer.h>
@@ -148,7 +149,7 @@ int64_t getEmissionChange(const Currency& currency, IBlockchainCache& segment, u
   auto lastBlocksSizes = segment.getLastBlocksSizes(currency.rewardBlocksWindow(), previousBlockIndex, addGenesisBlock);
   auto blocksSizeMedian = Common::medianValue(lastBlocksSizes);
   if (!currency.getBlockReward(cachedBlock.getBlock().majorVersion, blocksSizeMedian,
-                               cumulativeSize, alreadyGeneratedCoins, cumulativeFee, reward, emissionChange, previousBlockIndex+1)) {
+                               cumulativeSize, alreadyGeneratedCoins, cumulativeFee, reward, emissionChange)) {
     throw std::system_error(make_error_code(error::BlockValidationError::CUMULATIVE_BLOCK_SIZE_TOO_BIG));
   }
 
@@ -442,7 +443,7 @@ bool Core::queryBlocksLite(const std::vector<Crypto::Hash>& knownBlockHashes, ui
 
     return true;
   } catch (std::exception& e) {
-	logger(Logging::ERROR) << "Failed to query blocks: " << e.what();
+    logger(Logging::ERROR) << "Failed to query blocks: " << e.what();
     return false;
   }
 }
@@ -487,7 +488,7 @@ void Core::getTransactions(const std::vector<Crypto::Hash>& transactionHashes, s
   missedHashes.insert(missedHashes.end(), leftTransactions.begin(), leftTransactions.end());
 }
 
-Difficulty Core::getBlockDifficulty(uint32_t blockIndex) const {
+uint64_t Core::getBlockDifficulty(uint32_t blockIndex) const {
   throwIfNotInitialized();
   IBlockchainCache* mainChain = chainsLeaves[0];
   auto difficulties = mainChain->getLastCumulativeDifficulties(2, blockIndex, addGenesisBlock);
@@ -500,7 +501,7 @@ Difficulty Core::getBlockDifficulty(uint32_t blockIndex) const {
 }
 
 // TODO: just use mainChain->getDifficultyForNextBlock() ?
-Difficulty Core::getDifficultyForNextBlock() const {
+uint64_t Core::getDifficultyForNextBlock() const {
   throwIfNotInitialized();
   IBlockchainCache* mainChain = chainsLeaves[0];
 
@@ -588,9 +589,28 @@ std::error_code Core::addBlock(const CachedBlock& cachedBlock, RawBlock&& rawBlo
     return error::BlockValidationError::DIFFICULTY_OVERHEAD;
   }
 
-  if (!validateMixin(transactions, blockIndex))
+  // This allows us to accept blocks with transaction mixins for the mined money unlock window
+  // that may be using older mixin rules on the network. This helps to clear out the transaction
+  // pool during a network soft fork that requires a mixin lower or upper bound change
+  uint32_t mixinChangeWindow = blockIndex;
+  if (mixinChangeWindow > CryptoNote::parameters::CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW)
   {
+    mixinChangeWindow = mixinChangeWindow - CryptoNote::parameters::CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW;
+  }
+
+  bool success;
+  std::string error;
+  std::tie(success, error) = Mixins::validate(transactions, blockIndex);
+
+  if (!success)
+  {
+    std::tie(success, error) = Mixins::validate(transactions, mixinChangeWindow);
+
+    if (!success)
+    {
+      logger(Logging::DEBUGGING) << error;
       return error::TransactionValidationError::INVALID_MIXIN;
+    }
   }
 
   uint64_t cumulativeFee = 0;
@@ -613,7 +633,7 @@ std::error_code Core::addBlock(const CachedBlock& cachedBlock, RawBlock&& rawBlo
   auto blocksSizeMedian = Common::medianValue(lastBlocksSizes);
 
   if (!currency.getBlockReward(cachedBlock.getBlock().majorVersion, blocksSizeMedian,
-                               cumulativeBlockSize, alreadyGeneratedCoins, cumulativeFee, reward, emissionChange, blockIndex)) {
+                               cumulativeBlockSize, alreadyGeneratedCoins, cumulativeFee, reward, emissionChange)) {
     logger(Logging::DEBUGGING) << "Block " << blockStr << " has too big cumulative size";
     return error::BlockValidationError::CUMULATIVE_BLOCK_SIZE_TOO_BIG;
   }
@@ -629,7 +649,7 @@ std::error_code Core::addBlock(const CachedBlock& cachedBlock, RawBlock&& rawBlo
       logger(Logging::WARNING) << "Checkpoint block hash mismatch for block " << blockStr;
       return error::BlockValidationError::CHECKPOINT_BLOCK_HASH_MISMATCH;
     }
-  } else if (!currency.checkProofOfWork(cryptoContext, cachedBlock, currentDifficulty)) {
+  } else if (!currency.checkProofOfWork(cachedBlock, currentDifficulty)) {
     logger(Logging::WARNING) << "Proof of work too weak for block " << blockStr;
     return error::BlockValidationError::PROOF_OF_WORK_TOO_WEAK;
   }
@@ -945,87 +965,13 @@ bool Core::addTransactionToPool(CachedTransaction&& cachedTransaction) {
   return true;
 }
 
-bool Core::validateMixin(const std::vector<CachedTransaction> transactions,
-                         uint32_t height)
-{
-    uint64_t minMixin = 0;
-    uint64_t maxMixin = std::numeric_limits<uint64_t>::max();
-
-    /* We now limit the mixin allowed in a transaction. However, there have been
-     some transactions outside these limits in the past, so we need to only
-     enforce this on new blocks, otherwise wouldn't be able to sync the chain */
-
-    /* We also need to ensure that the mixin enforced is for the limit that
-     was correct when the block was formed - i.e. if 0 mixin was allowed at
-     block 100, but is no longer allowed - we should still validate block 100 */
-    if (height >= CryptoNote::parameters::MIXIN_LIMITS_V3_HEIGHT)
-    {
-        minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V3;
-        maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V3;
-    }
-    else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V2_HEIGHT)
-    {
-        minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V2;
-        maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V2;
-    }
-    else if (height >= CryptoNote::parameters::MIXIN_LIMITS_V1_HEIGHT)
-    {
-        minMixin = CryptoNote::parameters::MINIMUM_MIXIN_V1;
-        maxMixin = CryptoNote::parameters::MAXIMUM_MIXIN_V1;
-    }
-
-    for (const auto& transaction : transactions)
-    {
-        if (!validateMixin(transaction, minMixin, maxMixin))
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool Core::validateMixin(const CachedTransaction& cachedTransaction,
-                         uint64_t minMixin, uint64_t maxMixin) {
-  uint64_t ringSize = 1;
-
-  const auto tx = createTransaction(cachedTransaction.getTransaction());
-
-  for (size_t i = 0; i < tx->getInputCount(); ++i) {
-    if (tx->getInputType(i) != TransactionTypes::InputType::Key) {
-      continue;
-    }
-
-    KeyInput input;
-    tx->getInput(i, input);
-    const uint64_t currentRingSize = input.outputIndexes.size();
-    if (currentRingSize > ringSize) {
-        ringSize = currentRingSize;
-    }
-  }
-
-  /* Ring size = mixin + 1 - your transaction plus the others you mix with */
-  const uint64_t mixin = ringSize - 1;
-
-  if (mixin > maxMixin) {
-    logger(Logging::DEBUGGING) << "Transaction " << cachedTransaction.getTransactionHash()
-      << " is not valid. Reason: transaction mixin is too large (" << mixin
-      << "). Maximum mixin allowed is " << maxMixin;
-
-    return false;
-  } else if (mixin < minMixin) {
-    logger(Logging::DEBUGGING) << "Transaction " << cachedTransaction.getTransactionHash()
-      << " is not valid. Reason: transaction mixin is too small (" << mixin
-      << "). Minimum mixin allowed is " << minMixin;
-
-    return false;
-  }
-
-  return true;
-}
-
 bool Core::isTransactionValidForPool(const CachedTransaction& cachedTransaction, TransactionValidatorState& validatorState) {
-  if (!validateMixin({cachedTransaction}, getTopBlockIndex()))
+  bool success;
+  std::string err;
+
+  std::tie(success, err) = Mixins::validate({cachedTransaction}, getTopBlockIndex());
+
+  if (!success)
   {
       return false;
   }
@@ -1047,6 +993,7 @@ bool Core::isTransactionValidForPool(const CachedTransaction& cachedTransaction,
   }
 
   bool isFusion = fee == 0 && currency.isFusionTransaction(cachedTransaction.getTransaction(), cachedTransaction.getTransactionBinaryArray().size(), getTopBlockIndex());
+
   if (!isFusion && fee < currency.minimumFee()) {
     logger(Logging::WARNING) << "Transaction " << cachedTransaction.getTransactionHash()
       << " is not valid. Reason: fee is too small and it's not a fusion transaction";
@@ -1099,7 +1046,7 @@ bool Core::getPoolChangesLite(const Crypto::Hash& lastBlockHash, const std::vect
 }
 
 bool Core::getBlockTemplate(BlockTemplate& b, const AccountPublicAddress& adr, const BinaryArray& extraNonce,
-                            Difficulty& difficulty, uint32_t& height) const {
+                            uint64_t& difficulty, uint32_t& height) const {
   throwIfNotInitialized();
 
   height = getTopBlockIndex() + 1;
@@ -1533,8 +1480,8 @@ std::error_code Core::validateBlock(const CachedBlock& cachedBlock, IBlockchainC
     return error::BlockValidationError::TIMESTAMP_TOO_FAR_IN_FUTURE;
   }
 
-  auto timestamps = cache->getLastTimestamps(currency.timestampCheckWindow(), previousBlockIndex, addGenesisBlock);
-  if (timestamps.size() >= currency.timestampCheckWindow()) {
+  auto timestamps = cache->getLastTimestamps(currency.timestampCheckWindow(previousBlockIndex+1), previousBlockIndex, addGenesisBlock);
+  if (timestamps.size() >= currency.timestampCheckWindow(previousBlockIndex+1)) {
     auto median_ts = Common::medianValue(timestamps);
     if (block.timestamp < median_ts) {
       return error::BlockValidationError::TIMESTAMP_TOO_FAR_IN_PAST;
@@ -2139,13 +2086,13 @@ BlockDetails Core::getBlockDetails(const Crypto::Hash& blockHash) const {
   }
 
   int64_t emissionChange = 0;
-  bool result = currency.getBlockReward(blockDetails.majorVersion, blockDetails.sizeMedian, 0, prevBlockGeneratedCoins, 0, blockDetails.baseReward, emissionChange, blockIndex);
+  bool result = currency.getBlockReward(blockDetails.majorVersion, blockDetails.sizeMedian, 0, prevBlockGeneratedCoins, 0, blockDetails.baseReward, emissionChange);
   if (result) {}
   assert(result);
 
   uint64_t currentReward = 0;
   result = currency.getBlockReward(blockDetails.majorVersion, blockDetails.sizeMedian, blockDetails.transactionsCumulativeSize,
-                                   prevBlockGeneratedCoins, 0, currentReward, emissionChange, blockIndex);
+                                   prevBlockGeneratedCoins, 0, currentReward, emissionChange);
   assert(result);
 
   if (blockDetails.baseReward == 0 && currentReward == 0) {
@@ -2413,7 +2360,7 @@ void Core::transactionPoolCleaningProcedure() {
     for (;;) {
       timer.sleep(OUTDATED_TRANSACTION_POLLING_INTERVAL);
 
-      auto deletedTransactions = transactionPool->clean();
+      auto deletedTransactions = transactionPool->clean(getTopBlockIndex());
       notifyObservers(makeDelTransactionMessage(std::move(deletedTransactions), Messages::DeleteTransaction::Reason::Outdated));
     }
   } catch (System::InterruptedException&) {
@@ -2435,8 +2382,8 @@ void Core::updateBlockMedianSize() {
 
 uint64_t Core::get_current_blockchain_height() const
 {
-	// TODO: remove when GetCoreStatistics is implemented
-	return mainChainStorage->getBlockCount();
+  // TODO: remove when GetCoreStatistics is implemented
+  return mainChainStorage->getBlockCount();
 }
 
 std::time_t Core::getStartTime() const
@@ -2445,3 +2392,4 @@ std::time_t Core::getStartTime() const
 }
 
 }
+

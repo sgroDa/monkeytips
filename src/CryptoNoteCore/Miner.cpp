@@ -1,19 +1,8 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
-//
-// This file is part of Bytecoin.
-//
-// Bytecoin is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Bytecoin is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with Bytecoin.  If not, see <http://www.gnu.org/licenses/>.
+// Copyright (c) 2014-2018, The Monero Project
+// Copyright (c) 2018, The TurtleCoin Developers
+// 
+// Please see the included LICENSE file for more information.
 
 #include "Miner.h"
 
@@ -34,6 +23,7 @@
 #include "Common/StringTools.h"
 #include "Serialization/SerializationTools.h"
 
+#include "CheckDifficulty.h"
 #include "CryptoNoteFormatUtils.h"
 #include "TransactionExtra.h"
 
@@ -67,7 +57,7 @@ namespace CryptoNote
     stop();
   }
   //-----------------------------------------------------------------------------------------------------
-  bool miner::set_block_template(const BlockTemplate& bl, const Difficulty& di) {
+  bool miner::set_block_template(const BlockTemplate& bl, const uint64_t& di) {
     std::lock_guard<decltype(m_template_lock)> lk(m_template_lock);
 
     m_template = bl;
@@ -103,7 +93,7 @@ namespace CryptoNote
   //-----------------------------------------------------------------------------------------------------
   bool miner::request_block_template() {
     BlockTemplate bl = boost::value_initialized<BlockTemplate>();
-    Difficulty di = 0;
+    uint64_t di = 0;
     uint32_t height;
     CryptoNote::BinaryArray extra_nonce;
 
@@ -278,7 +268,7 @@ namespace CryptoNote
     return true;
   }
   //-----------------------------------------------------------------------------------------------------
-  bool miner::find_nonce_for_given_block(Crypto::cn_context &context, BlockTemplate& bl, const Difficulty& diffic) {
+  bool miner::find_nonce_for_given_block(BlockTemplate& bl, const uint64_t& diffic) {
 
     unsigned nthreads = std::thread::hardware_concurrency();
 
@@ -290,7 +280,6 @@ namespace CryptoNote
 
       for (unsigned i = 0; i < nthreads; ++i) {
         threads[i] = std::async(std::launch::async, [&, i]() {
-          Crypto::cn_context localctx;
           Crypto::Hash h;
 
           BlockTemplate lb(bl); // copy to local block
@@ -300,7 +289,7 @@ namespace CryptoNote
 
             CachedBlock cb(lb);
             try {
-              h = cb.getBlockLongHash(localctx);
+              h = cb.getBlockLongHash();
             } catch (std::exception&) {
               return;
             }
@@ -328,7 +317,7 @@ namespace CryptoNote
         Crypto::Hash h;
         CachedBlock cb(bl);
         try {
-          h = cb.getBlockLongHash(context);
+          h = cb.getBlockLongHash();
         } catch (std::exception&) {
           return false;
         }
@@ -374,9 +363,8 @@ namespace CryptoNote
   {
     logger(INFO) << "Miner thread was started ["<< th_local_index << "]";
     uint32_t nonce = m_starter_nonce + th_local_index;
-    Difficulty local_diff = 0;
+    uint64_t local_diff = 0;
     uint32_t local_template_ver = 0;
-    Crypto::cn_context context;
     BlockTemplate b;
 
     while(!m_stop)
@@ -410,7 +398,7 @@ namespace CryptoNote
       CachedBlock cb(b);
       if (!m_stop) {
         try {
-          h = cb.getBlockLongHash(context);
+          h = cb.getBlockLongHash();
         } catch (std::exception& e) {
           logger(ERROR) << "getBlockLongHash failed: " << e.what();
           m_stop = true;

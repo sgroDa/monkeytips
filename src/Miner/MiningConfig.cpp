@@ -25,7 +25,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
-#include "CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 #include "Logging/ILogger.h"
 
 namespace po = boost::program_options;
@@ -142,7 +142,7 @@ void MiningConfig::printHelp() {
 }
 
 void MiningConfig::printVersion() {
-  std::cout << "monkeytips v" << PROJECT_VERSION << " Miner" << std::endl;
+  std::cout << CryptoNote::CRYPTONOTE_NAME << " v" << PROJECT_VERSION << " Miner" << std::endl;
 }
 
 }

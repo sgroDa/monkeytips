@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -10,12 +10,12 @@
 #include <string>
 #include <vector>
 #include <boost/utility.hpp>
-#include "../CryptoNoteConfig.h"
-#include "../crypto/hash.h"
+#include "../config/CryptoNoteConfig.h"
+#include "crypto/hash.h"
 #include "../Logging/LoggerRef.h"
 #include "CachedBlock.h"
 #include "CryptoNoteBasic.h"
-#include "Difficulty.h"
+
 
 namespace CryptoNote {
 
@@ -29,8 +29,18 @@ public:
   uint64_t publicAddressBase58Prefix() const { return m_publicAddressBase58Prefix; }
   uint32_t minedMoneyUnlockWindow() const { return m_minedMoneyUnlockWindow; }
 
-  size_t timestampCheckWindow() const { return m_timestampCheckWindow; }
-  uint64_t blockFutureTimeLimit() const { return m_blockFutureTimeLimit; }
+  size_t timestampCheckWindow(uint32_t blockHeight) const
+  {
+      if (blockHeight >= CryptoNote::parameters::LWMA_2_DIFFICULTY_BLOCK_INDEX_V3)
+      {
+          return CryptoNote::parameters::BLOCKCHAIN_TIMESTAMP_CHECK_WINDOW_V3;
+      }
+      else
+      {
+          return m_timestampCheckWindow;
+      }
+  }
+
   uint64_t blockFutureTimeLimit(uint32_t blockHeight) const
   {
       if (blockHeight >= CryptoNote::parameters::LWMA_2_DIFFICULTY_BLOCK_INDEX_V2)
@@ -65,6 +75,14 @@ public:
   uint64_t minimumFee() const { return m_mininumFee; }
   uint64_t defaultDustThreshold(uint32_t height) const {
       if (height >= CryptoNote::parameters::DUST_THRESHOLD_V2_HEIGHT)
+      {
+          return CryptoNote::parameters::DEFAULT_DUST_THRESHOLD_V2;
+      }
+
+      return m_defaultDustThreshold;
+  }
+  uint64_t defaultFusionDustThreshold(uint32_t height) const {
+      if (height >= CryptoNote::parameters::FUSION_DUST_THRESHOLD_HEIGHT_V2)
       {
           return CryptoNote::parameters::DEFAULT_DUST_THRESHOLD_V2;
       }
@@ -116,7 +134,7 @@ size_t difficultyBlocksCountByBlockVersion(uint8_t blockMajorVersion, uint32_t h
   const Crypto::Hash& genesisBlockHash() const { return cachedGenesisBlock->getBlockHash(); }
 
   bool getBlockReward(uint8_t blockMajorVersion, size_t medianSize, size_t currentBlockSize, uint64_t alreadyGeneratedCoins, uint64_t fee,
-    uint64_t& reward, int64_t& emissionChange, uint32_t height) const;
+    uint64_t& reward, int64_t& emissionChange) const;
   size_t maxBlockCumulativeSize(uint64_t height) const;
 
   bool constructMinerTx(uint8_t blockMajorVersion, uint32_t height, size_t medianSize, uint64_t alreadyGeneratedCoins, size_t currentBlockSize,
@@ -136,15 +154,13 @@ size_t difficultyBlocksCountByBlockVersion(uint8_t blockMajorVersion, uint32_t h
   std::string formatAmount(int64_t amount) const;
   bool parseAmount(const std::string& str, uint64_t& amount) const;
 
-  Difficulty getNextDifficulty(uint8_t version, uint32_t blockIndex, std::vector<uint64_t> timestamps, std::vector<Difficulty> cumulativeDifficulties) const;
-  Difficulty nextDifficulty(std::vector<uint64_t> timestamps, std::vector<Difficulty> cumulativeDifficulties) const;
-Difficulty nextDifficulty(uint8_t version, uint32_t blockIndex, std::vector<uint64_t> timestamps, std::vector<Difficulty> cumulativeDifficulties) const;
-  Difficulty nextDifficultyV3(std::vector<uint64_t> timestamps, std::vector<Difficulty> cumulative_difficulties) const;
-  Difficulty nextDifficultyV4(std::vector<uint64_t> timestamps, std::vector<Difficulty> cumulative_difficulties) const;
+  uint64_t getNextDifficulty(uint8_t version, uint32_t blockIndex, std::vector<uint64_t> timestamps, std::vector<uint64_t> cumulativeDifficulties) const;
+  uint64_t nextDifficulty(uint8_t version, uint32_t blockIndex, std::vector<uint64_t> timestamps, std::vector<uint64_t> cumulativeDifficulties) const;
 
-  bool checkProofOfWorkV1(Crypto::cn_context& context, const CachedBlock& block, Difficulty currentDifficulty) const;
-  bool checkProofOfWorkV2(Crypto::cn_context& context, const CachedBlock& block, Difficulty currentDifficulty) const;
-  bool checkProofOfWork(Crypto::cn_context& context, const CachedBlock& block, Difficulty currentDifficulty) const;
+
+  bool checkProofOfWorkV1(const CachedBlock& block, uint64_t currentDifficulty) const;
+  bool checkProofOfWorkV2(const CachedBlock& block, uint64_t currentDifficulty) const;
+  bool checkProofOfWork(const CachedBlock& block, uint64_t currentDifficulty) const;
 
   Currency(Currency&& currency);
 
@@ -298,7 +314,7 @@ public:
   CurrencyBuilder& blocksFileName(const std::string& val) { m_currency.m_blocksFileName = val; return *this; }
   CurrencyBuilder& blockIndexesFileName(const std::string& val) { m_currency.m_blockIndexesFileName = val; return *this; }
   CurrencyBuilder& txPoolFileName(const std::string& val) { m_currency.m_txPoolFileName = val; return *this; }
-  
+
   CurrencyBuilder& isBlockexplorer(const bool val) { m_currency.m_isBlockexplorer = val; return *this; }
   CurrencyBuilder& testnet(bool val) { m_currency.m_testnet = val; return *this; }
 
