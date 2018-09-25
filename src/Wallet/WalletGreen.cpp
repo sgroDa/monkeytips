@@ -1,7 +1,7 @@
 // Copyright (c) 2012-2017, The CryptoNote developers, The Bytecoin developers
 // Copyright (c) 2014-2018, The Monero Project
 // Copyright (c) 2018, The TurtleCoin Developers
-// 
+//
 // Please see the included LICENSE file for more information.
 
 #include "WalletGreen.h"
@@ -1090,7 +1090,7 @@ std::vector<std::string> WalletGreen::doCreateAddressList(const std::vector<NewA
 
       for (auto& addressData : addressDataList) {
         std::string address = addWallet(addressData, scanHeight, newAddress);
-        
+
         m_logger(INFO, BRIGHT_WHITE) << "New wallet added " << address;
 
         addresses.push_back(std::move(address));
@@ -1140,7 +1140,7 @@ std::string WalletGreen::addWallet(const NewAddressData &addressData, uint64_t s
       m_currency.accountAddressAsString(AccountPublicAddress{spendPublicKey, m_viewPublicKey});
     throw std::system_error(make_error_code(error::ADDRESS_ALREADY_EXISTS));
   }
-  
+
   try {
     AccountSubscription sub;
     sub.keys.address.viewPublicKey = m_viewPublicKey;
@@ -1237,7 +1237,7 @@ uint64_t WalletGreen::scanHeightToTimestamp(const uint64_t scanHeight)
     }
 
     /* Get the amount of seconds since the blockchain launched */
-    uint64_t secondsSinceLaunch = scanHeight * 
+    uint64_t secondsSinceLaunch = scanHeight *
                                   CryptoNote::parameters::DIFFICULTY_TARGET;
 
     /* Add a bit of a buffer in case of difficulty weirdness, blocks coming
@@ -1245,7 +1245,7 @@ uint64_t WalletGreen::scanHeightToTimestamp(const uint64_t scanHeight)
     secondsSinceLaunch *= 0.95;
 
     /* Get the genesis block timestamp and add the time since launch */
-    timestamp = CryptoNote::parameters::GENESIS_BLOCK_TIMESTAMP
+    timestamp = 1530327904
               + secondsSinceLaunch;
 
     /* Timestamp in the future */
@@ -2258,7 +2258,7 @@ bool WalletGreen::adjustTransfer(size_t transactionId, size_t firstTransferIdx, 
           it->second.amount = amount;
           updated = true;
         }
-        
+
         firstAddressTransferFound = true;
         ++it;
       }
@@ -3453,7 +3453,7 @@ std::vector<WalletGreen::OutputToTransfer> WalletGreen::pickRandomFusionInputs(c
       break;
     }
   }
-  
+
   if (bucketNumberIndex == bucketNumbers.size()) {
     return {};
   }
@@ -3465,7 +3465,7 @@ std::vector<WalletGreen::OutputToTransfer> WalletGreen::pickRandomFusionInputs(c
   for (size_t i = 0; i < selectedBucket; ++i) {
     lowerBound *= 10;
   }
-   
+
   uint64_t upperBound = selectedBucket == std::numeric_limits<uint64_t>::digits10 ? UINT64_MAX : lowerBound * 10;
   std::vector<WalletGreen::OutputToTransfer> selectedOuts;
   selectedOuts.reserve(bucketSizes[selectedBucket]);
@@ -3491,7 +3491,7 @@ std::vector<WalletGreen::OutputToTransfer> WalletGreen::pickRandomFusionInputs(c
   }
 
   std::sort(trimmedSelectedOuts.begin(), trimmedSelectedOuts.end(), outputsSortingFunction);
-  return trimmedSelectedOuts;  
+  return trimmedSelectedOuts;
 }
 
 std::vector<TransactionsInBlockInfo> WalletGreen::getTransactionsInBlocks(uint32_t blockIndex, size_t count) const {
@@ -3499,7 +3499,7 @@ std::vector<TransactionsInBlockInfo> WalletGreen::getTransactionsInBlocks(uint32
     m_logger(ERROR, BRIGHT_RED) << "Bad argument: block count must be greater than zero";
     throw std::system_error(make_error_code(error::WRONG_PARAMETERS), "blocks count must be greater than zero");
   }
-  
+
   if (blockIndex == 0) {
     m_logger(ERROR, BRIGHT_RED) << "Bad argument: blockIndex must be greater than zero";
     throw std::system_error(make_error_code(error::WRONG_PARAMETERS), "blockIndex must be greater than zero");
