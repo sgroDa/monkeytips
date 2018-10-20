@@ -191,8 +191,8 @@ const int      RPC_DEFAULT_PORT                              =  13002;
 const int      SERVICE_DEFAULT_PORT                          =  8420;
 const char     LATEST_VERSION_URL[]                          = "http://monkeytips.top";
 
-const uint8_t  P2P_CURRENT_VERSION                           = 3;
-const uint8_t  P2P_MINIMUM_VERSION                           = 2;
+const uint8_t  P2P_CURRENT_VERSION                           = 2;
+const uint8_t  P2P_MINIMUM_VERSION                           = 1;
 // This defines the number of versions ahead we must see peers before we start displaying
 // warning messages that we need to upgrade our software.
 const uint8_t  P2P_UPGRADE_WINDOW                            = 2;
@@ -217,13 +217,13 @@ const static  boost::uuids::uuid CRYPTONOTE_NETWORK          =
 };
 
 const char* const SEED_NODES[] = {
-  "35.237.212.180:13001",
-  "35.190.197.131:13001",
-  "seed-mtip-0.triforcecoin.com:13001",
-  "seed-mtip-1.triforcecoin.com:13001",
-  "35.237.5.160:13001",
-  "104.155.39.18:13001",
-  "45.76.3.17:13001",
-  "149.28.102.229:13001"
+  "35.227.111.188:13001", //crappy
+  "35.190.197.131:13001", //crappy
+//  "seed-mtip-0.triforcecoin.com:13001",
+//  "seed-mtip-1.triforcecoin.com:13001",
+//  "35.237.5.160:13001",
+//  "104.155.39.18:13001",
+  "45.76.3.17:13001",  //crapppy
+  "149.28.102.229:13001" //crappy
 };
 } // CryptoNote
