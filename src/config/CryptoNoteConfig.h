@@ -217,13 +217,7 @@ const static  boost::uuids::uuid CRYPTONOTE_NETWORK          =
 };
 
 const char* const SEED_NODES[] = {
-  "35.227.111.188:13001", //crappy
-  "35.190.197.131:13001", //crappy
-//  "seed-mtip-0.triforcecoin.com:13001",
-//  "seed-mtip-1.triforcecoin.com:13001",
-//  "35.237.5.160:13001",
-//  "104.155.39.18:13001",
-  "45.76.3.17:13001",  //crapppy
-  "149.28.102.229:13001" //crappy
+   "184.69.197.50:13001", // madk
+   "mtips.mnmlsv.net:13001" // Mnml
 };
 } // CryptoNote
