@@ -54,7 +54,7 @@ const uint64_t EMISSION_SPEED_V2_HEIGHT                      = 77000;
 
 const uint64_t GENESIS_BLOCK_REWARD                          = UINT64_C(2000000000);
 
-const size_t   CRYPTONOTE_REWARD_BLOCKS_WINDOW               = static_cast<size_t>(100);
+const size_t   CRYPTONOTE_REWARD_BLOCKS_WINDOW               = 100;
 const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE     = 100000; //size of block (bytes) after which reward for block calculated using block size
 const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2  = 20000;
 const size_t   CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V1  = 10000;
