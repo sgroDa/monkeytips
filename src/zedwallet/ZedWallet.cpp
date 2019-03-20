@@ -1,15 +1,14 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-//
+// 
 // Please see the included LICENSE file for more information.
 
 ////////////////////////////////
 #include <zedwallet/ZedWallet.h>
 ////////////////////////////////
 
+#include <config/CliHeader.h>
 #include <Common/SignalHandler.h>
-
 #include <CryptoNoteCore/Currency.h>
-
 #include <Logging/FileLogger.h>
 #include <Logging/LoggerManager.h>
 
@@ -17,7 +16,7 @@
 #include <windows.h>
 #endif
 
-#include <zedwallet/ColouredMsg.h>
+#include <Utilities/ColouredMsg.h>
 #include <zedwallet/Menu.h>
 #include <zedwallet/ParseArguments.h>
 #include <zedwallet/Tools.h>
@@ -35,41 +34,31 @@ int main(int argc, char **argv)
 
     Config config = parseArguments(argc, argv);
 
-    /* User requested --help or --version, or invalid arguments */
-    if (config.exit)
-    {
-        return 0;
-    }
+    std::cout << InformationMsg(CryptoNote::getProjectCLIHeader()) << std::endl;
 
-    Logging::LoggerManager logManager;
-
-    /* We'd like these lines to be in the below if(), but because some genius
-       thought it was a good idea to pass everything by reference and then
-       use them after the functions lifetime they go out of scope and break
-       stuff */
-    logManager.setMaxLevel(Logging::DEBUGGING);
-
-    Logging::FileLogger fileLogger;
+    const auto logManager = std::make_shared<Logging::LoggerManager>();
 
     if (config.debug)
     {
+        logManager->setMaxLevel(Logging::DEBUGGING);
+
+        Logging::FileLogger fileLogger;
+
         fileLogger.init(WalletConfig::walletName + ".log");
-        logManager.addLogger(fileLogger);
+        logManager->addLogger(fileLogger);
     }
 
-    Logging::LoggerRef logger(logManager, WalletConfig::walletName);
-
     /* Currency contains our coin parameters, such as decimal places, supply */
-    const CryptoNote::Currency currency
+    const CryptoNote::Currency currency 
         = CryptoNote::CurrencyBuilder(logManager).currency();
 
     System::Dispatcher localDispatcher;
     System::Dispatcher *dispatcher = &localDispatcher;
 
-    /* Our connection to monkeytipsd */
+    /* Our connection to turtlecoind */
     std::unique_ptr<CryptoNote::INode> node(
-        new CryptoNote::NodeRpcProxy(config.host, config.port,
-                                     logger.getLogger()));
+        new CryptoNote::NodeRpcProxy(config.host, config.port, logManager)
+    );
 
     std::promise<std::error_code> errorPromise;
 
@@ -116,8 +105,8 @@ int main(int argc, char **argv)
 
       feemsg << std::endl << "You have connected to a node that charges " <<
              "a fee to send transactions." << std::endl << std::endl
-             << "The fee for sending transactions is: " <<
-             formatAmount(node->feeAmount()) <<
+             << "The fee for sending transactions is: " << 
+             formatAmount(node->feeAmount()) << 
              " per transaction." << std::endl << std::endl <<
              "If you don't want to pay the node fee, please " <<
              "relaunch " << WalletConfig::walletName <<
@@ -128,8 +117,7 @@ int main(int argc, char **argv)
     }
 
     /* Create the wallet instance */
-    CryptoNote::WalletGreen wallet(*dispatcher, currency, *node,
-                                   logger.getLogger());
+    CryptoNote::WalletGreen wallet(*dispatcher, currency, *node, logManager);
 
     /* Run the interactive wallet interface */
     run(wallet, *node, config);
@@ -138,20 +126,18 @@ int main(int argc, char **argv)
 void run(CryptoNote::WalletGreen &wallet, CryptoNote::INode &node,
          Config &config)
 {
-    std::cout << InformationMsg(getVersion()) << std::endl;
-
-    std::shared_ptr<WalletInfo> walletInfo;
-
-    bool quit;
-
-    std::tie(quit, walletInfo) = selectionScreen(config, wallet, node);
+    auto [quit, walletInfo] = selectionScreen(config, wallet, node);
 
     bool alreadyShuttingDown = false;
 
     if (!quit)
     {
         /* Call shutdown on ctrl+c */
-        Tools::SignalHandler::install([&]
+        /* walletInfo = walletInfo - workaround for
+           https://stackoverflow.com/a/46115028/8737306 - standard &
+           capture works in newer compilers. */
+        Tools::SignalHandler::install([&walletInfo = walletInfo, &node,
+                                       &alreadyShuttingDown]
         {
             /* If we're already shutting down let control flow continue
                as normal */

@@ -11,7 +11,6 @@
 #include "../Common/Base58.h"
 #include "../Common/int-util.h"
 #include "../Common/StringTools.h"
-#include "../config/CryptoNoteConfig.h"
 
 #include "Account.h"
 #include "CheckDifficulty.h"
@@ -79,7 +78,7 @@ bool Currency::init() {
 bool Currency::generateGenesisBlock() {
   genesisBlockTemplate = boost::value_initialized<BlockTemplate>();
 
-  std::string genesisCoinbaseTxHex = "012801ff000180a8d6b907022bfdeeee6f2d6ab60a0b67a7d504192a5e851b71174098f719363346697c4f79210115dcc364197ec66ce30c8e6fb1ca237b38162324c904f97eb4d21fc899426e3c";
+  std::string genesisCoinbaseTxHex = CryptoNote::GENESIS_COINBASE_TX_HEX;
   BinaryArray minerTxBlob;
 
   bool r =
@@ -166,22 +165,13 @@ uint32_t Currency::upgradeHeight(uint8_t majorVersion) const {
 }
 
 bool Currency::getBlockReward(uint8_t blockMajorVersion, size_t medianSize, size_t currentBlockSize, uint64_t alreadyGeneratedCoins,
-  uint64_t fee, uint64_t& reward, int64_t& emissionChange, uint32_t height) const {
+  uint64_t fee, uint64_t& reward, int64_t& emissionChange) const {
   assert(alreadyGeneratedCoins <= m_moneySupply);
+  assert(m_emissionSpeedFactor > 0 && m_emissionSpeedFactor <= 8 * sizeof(uint64_t));
 
-  auto emission = m_emissionSpeedFactor;
-
-  if (height >= CryptoNote::parameters::EMISSION_SPEED_V2_HEIGHT)
-  {
-      emission = CryptoNote::parameters::EMISSION_SPEED_FACTOR_V2;
-  }
-
-  assert(emission > 0 && emission <= 8 * sizeof(uint64_t));
-
-  uint64_t baseReward = (m_moneySupply - alreadyGeneratedCoins) >> emission;
-  if (alreadyGeneratedCoins == 0 && m_genesisBlockReward != 2000000000) {
+  uint64_t baseReward = (m_moneySupply - alreadyGeneratedCoins) >> m_emissionSpeedFactor;
+  if (alreadyGeneratedCoins == 0 && m_genesisBlockReward != 0) {
     baseReward = m_genesisBlockReward;
-    std::cout << "Genesis block reward: " << baseReward << std::endl;
   }
 
   size_t blockGrantedFullRewardZone = blockGrantedFullRewardZoneByBlockVersion(blockMajorVersion);
@@ -228,7 +218,7 @@ bool Currency::constructMinerTx(uint8_t blockMajorVersion, uint32_t height, size
 
   uint64_t blockReward;
   int64_t emissionChange;
-  if (!getBlockReward(blockMajorVersion, medianSize, currentBlockSize, alreadyGeneratedCoins, fee, blockReward, emissionChange, height)) {
+  if (!getBlockReward(blockMajorVersion, medianSize, currentBlockSize, alreadyGeneratedCoins, fee, blockReward, emissionChange)) {
     logger(INFO) << "Block is too big";
     return false;
   }
@@ -436,6 +426,7 @@ bool Currency::parseAmount(const std::string& str, uint64_t& amount) const {
 
 uint64_t Currency::getNextDifficulty(uint8_t version, uint32_t blockIndex, std::vector<uint64_t> timestamps, std::vector<uint64_t> cumulativeDifficulties) const
 {
+    /* nextDifficultyV3 and above are defined in src/CryptoNoteCore/Difficulty.cpp */
     if (blockIndex >= CryptoNote::parameters::LWMA_2_DIFFICULTY_BLOCK_INDEX_V3)
     {
         return nextDifficultyV5(timestamps, cumulativeDifficulties);
@@ -633,7 +624,7 @@ bool Currency::checkProofOfWork(const CachedBlock& block, uint64_t currentDiffic
   return false;
 }
 
-size_t Currency::getApproximateMaximumInputCount(size_t transactionSize, size_t outputCount, size_t mixinCount) const {
+size_t Currency::getApproximateMaximumInputCount(size_t transactionSize, size_t outputCount, size_t mixinCount) {
   const size_t KEY_IMAGE_SIZE = sizeof(Crypto::KeyImage);
   const size_t OUTPUT_KEY_SIZE = sizeof(decltype(KeyOutput::key));
   const size_t AMOUNT_SIZE = sizeof(uint64_t) + 2; //varint
@@ -707,7 +698,7 @@ cachedGenesisBlock(new CachedBlock(genesisBlockTemplate)),
 logger(currency.logger) {
 }
 
-CurrencyBuilder::CurrencyBuilder(Logging::ILogger& log) : m_currency(log) {
+CurrencyBuilder::CurrencyBuilder(std::shared_ptr<Logging::ILogger> log) : m_currency(log) {
   maxBlockNumber(parameters::CRYPTONOTE_MAX_BLOCK_NUMBER);
   maxBlockBlobSize(parameters::CRYPTONOTE_MAX_BLOCK_BLOB_SIZE);
   maxTxSize(parameters::CRYPTONOTE_MAX_TX_SIZE);
@@ -805,7 +796,6 @@ Transaction CurrencyBuilder::generateGenesisTransaction() {
       tk.key = outEphemeralPubKey;
       TransactionOutput out;
       out.amount = (i == 0) ? first_target_amount : target_amount;
-      std::cout << "outs: " << std::to_string(out.amount) << std::endl;
       out.target = tk;
       tx.outputs.push_back(out);
     }
