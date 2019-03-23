@@ -1,5 +1,5 @@
 // Copyright (c) 2018, The TurtleCoin Developers
-//
+// 
 // Please see the included LICENSE file for more information.
 
 #pragma once
@@ -45,18 +45,18 @@ namespace WalletConfig
 
 
     /* The length of a standard address for your coin */
-    const long unsigned int standardAddressLength = 99;
+    const uint16_t standardAddressLength = 99;
 
     /* The length of an integrated address for your coin - It's the same as
        a normal address, but there is a paymentID included in there - since
        payment ID's are 64 chars, and base58 encoding is done by encoding
        chunks of 8 chars at once into blocks of 11 chars, we can calculate
        this automatically */
-    const long unsigned int integratedAddressLength = standardAddressLength
-                                                    + ((64 * 11) / 8);
+    const uint16_t integratedAddressLength = standardAddressLength
+                                           + ((64 * 11) / 8);
 
     /* The default fee value to use with transactions (in ATOMIC units!) */
-    const uint64_t defaultFee = CryptoNote::parameters::MINIMUM_FEE;
+    const uint64_t defaultFee = CryptoNote::parameters::MINIMUM_FEE; 
 
     /* The minimum fee value to allow with transactions (in ATOMIC units!) */
     const uint64_t minimumFee = CryptoNote::parameters::MINIMUM_FEE;

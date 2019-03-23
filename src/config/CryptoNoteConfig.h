@@ -8,6 +8,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <limits>
 #include <initializer_list>
 #include <boost/uuid/uuid.hpp>
@@ -62,6 +63,7 @@ const size_t   CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE        = 600;
 const size_t   CRYPTONOTE_DISPLAY_DECIMAL_POINT              = 2;
 const uint64_t MINIMUM_FEE                                   = UINT64_C(10);
 
+/* This section defines our minimum and maximum mixin counts required for transactions */
 const uint64_t MINIMUM_MIXIN_V1                              = 0;
 const uint64_t MAXIMUM_MIXIN_V1                              = 7;
 
@@ -70,6 +72,8 @@ const uint64_t MAXIMUM_MIXIN_V2                              = 7;
 
 const uint64_t MINIMUM_MIXIN_V3                              = 0;
 const uint64_t MAXIMUM_MIXIN_V3                              = 7;
+
+/* The heights to activate the mixin limits at */
 
 
 const uint32_t MIXIN_LIMITS_V1_HEIGHT                        = 40;
@@ -193,6 +197,10 @@ const char     LATEST_VERSION_URL[]                          = "http://monkeytip
 
 const uint8_t  P2P_CURRENT_VERSION                           = 2;
 const uint8_t  P2P_MINIMUM_VERSION                           = 1;
+
+// This defines the minimum P2P version required for lite blocks propogation
+const uint8_t P2P_LITE_BLOCKS_PROPOGATION_VERSION            = 6;
+
 // This defines the number of versions ahead we must see peers before we start displaying
 // warning messages that we need to upgrade our software.
 const uint8_t  P2P_UPGRADE_WINDOW                            = 2;
@@ -211,6 +219,13 @@ const uint32_t P2P_DEFAULT_PING_CONNECTION_TIMEOUT           = 2000;          //
 const uint64_t P2P_DEFAULT_INVOKE_TIMEOUT                    = 60 * 2 * 1000; // 2 minutes
 const size_t   P2P_DEFAULT_HANDSHAKE_INVOKE_TIMEOUT          = 5000;          // 5 seconds
 const char     P2P_STAT_TRUSTED_PUB_KEY[]                    = "";
+
+const uint64_t DATABASE_WRITE_BUFFER_MB_DEFAULT_SIZE         = 256;
+const uint64_t DATABASE_READ_BUFFER_MB_DEFAULT_SIZE          = 10;
+const uint32_t DATABASE_DEFAULT_MAX_OPEN_FILES               = 100;
+const uint16_t DATABASE_DEFAULT_BACKGROUND_THREADS_COUNT     = 2;
+
+const std::string LICENSE_URL                                = "";
 const static  boost::uuids::uuid CRYPTONOTE_NETWORK          =
 {
     {  0x5c, 0x7a, 0x51, 0xcf, 0x21, 0xd3, 0xa4, 0x6f, 0xf2, 0xb3, 0x22, 0xa5, 0xb3, 0x74, 0xe4, 0x17  }
