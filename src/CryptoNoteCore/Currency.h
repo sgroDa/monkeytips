@@ -10,12 +10,11 @@
 #include <string>
 #include <vector>
 #include <boost/utility.hpp>
-#include "config/CryptoNoteConfig.h"
+#include <config/CryptoNoteConfig.h>
 #include "crypto/hash.h"
 #include "Logging/LoggerRef.h"
 #include "CachedBlock.h"
 #include "CryptoNoteBasic.h"
-
 
 namespace CryptoNote {
 
@@ -164,10 +163,12 @@ size_t difficultyBlocksCountByBlockVersion(uint8_t blockMajorVersion, uint32_t h
 
   Currency(Currency&& currency);
 
-  size_t getApproximateMaximumInputCount(size_t transactionSize, size_t outputCount, size_t mixinCount) const;
+  static size_t getApproximateMaximumInputCount(size_t transactionSize, size_t outputCount, size_t mixinCount);
+
+  static const std::vector<uint64_t> PRETTY_AMOUNTS;
 
 private:
-  Currency(Logging::ILogger& log) : logger(log, "currency") {
+  Currency(std::shared_ptr<Logging::ILogger> log) : logger(log, "currency") {
   }
 
   bool init();
@@ -232,7 +233,7 @@ private:
   std::string m_blockIndexesFileName;
   std::string m_txPoolFileName;
 
-  static const std::vector<uint64_t> PRETTY_AMOUNTS;
+
 
   bool m_testnet;
   bool m_isBlockexplorer;
@@ -247,7 +248,7 @@ private:
 
 class CurrencyBuilder : boost::noncopyable {
 public:
-  CurrencyBuilder(Logging::ILogger& log);
+  CurrencyBuilder(std::shared_ptr<Logging::ILogger> log);
 
   Currency currency() {
     if (!m_currency.init()) {
